@@ -1,0 +1,27 @@
+<html>
+<head>
+    <title>Socket IO Basic</title>
+    <script src="/socket.io/socket.io.js"></script>
+</head>
+
+<body>
+
+<script>
+
+    const socket = io('http://localhost:8000');
+    socket.on('connect', () => {
+        //do connect type staff
+    });
+
+    socket.on('messageFromServer', (data) => {
+        console.log(data);
+    });
+
+    socket.emit('messageFromClient', {
+        data: 'Hello From Client'
+    });
+
+</script>
+
+</body>
+</html>

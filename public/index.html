@@ -1,27 +1,218 @@
 <html>
 <head>
-    <title>Socket IO Basic</title>
+    <title>Chat View</title>
     <script src="/socket.io/socket.io.js"></script>
+    <script src="js/main.js"></script>
+    <style>
+        .container {
+            display: flex;
+            flex-direction: row;
+            height: 100%;
+        }
+
+        .users {
+            width: 300px;
+        }
+
+        .user {
+            padding: 10px;
+            font-size: 15px;
+            cursor: pointer;
+            margin: 5px;
+            background-color: aliceblue;
+            overflow-y: auto;
+        }
+
+        .chat-list {
+
+        }
+
+        .chat {
+            margin: 5px;
+            margin-left: 30px;
+            margin-right: 20px;
+            display: flex;
+            flex-direction: column;
+            flex-grow: 1;
+        }
+
+        textarea {
+            width: 100%;
+        }
+
+        .form {
+            margin-top: 30px;
+            height: 120px;
+        }
+
+        .chat-list {
+            flex-grow: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chat-item {
+            background-color: #eaeaea;
+            padding: 10px;
+            max-width: 700px;
+            border-radius: 10px;
+            margin-top: 10px;
+        }
+
+        .my-text {
+            background-color: antiquewhite;
+            align-self: flex-start;
+        }
+
+        .others-text {
+            align-self: flex-end;
+        }
+    </style>
+
 </head>
 
 <body>
 
+<div class="container">
+    <div class="users">
+
+    </div>
+    <div class="chat">
+        <div class="chat-list">
+        </div>
+        <div class="form">
+            <div>
+                <textarea rows="6" class="message"></textarea>
+            </div>
+            <button class="send-button">Send</button>
+        </div>
+    </div>
+</div>
+
 <script>
 
-    const socket = io('http://localhost:8000');
-    console.log(socket);
+    const socket = io('http://localhost:8000/default');
+    const currentUser = getUser();
+    let selectedUserToChat = null;
+    let lastRenderedMessage = null;
+    const messagesToDelete = [];
 
     socket.on('connect', () => {
-        console.log(socket.id);
-
-        socket.on('messageFromServer', (data) => {
-            console.log(data);
-        });
-
-        socket.emit('messageFromClient', {
-            data: 'Hello From Client'
-        });
+        console.log('connected')
     });
+
+    let userMessages = [];
+
+    socket.on('NEW_USER_ADDED', (users) => {
+        console.log(users)
+        usersElem.innerHTML = '';
+        for (let user of users) {
+            if (user.userName !== currentUser.userName) {
+                addUser(user);
+            }
+        }
+    });
+
+    socket.on('ALL_MESSAGES', (messages) => {
+        console.log(messages);
+        userMessages = messages;
+
+        if (selectedUserToChat) {
+            messagesToDelete.forEach(elem => elem.remove());
+            let indexOfLastRenderedMessage = 0;
+            let messagesForSelectedUser = userMessages
+                .filter(message => (message.from === selectedUserToChat && message.to === currentUser.userName)
+                    || (message.from === currentUser.userName && message.to === selectedUserToChat));
+
+            if (lastRenderedMessage) {
+                for (let index = 0; index < messagesForSelectedUser.length; index++) {
+                    if (lastRenderedMessage === JSON.stringify(messagesForSelectedUser[index])) {
+                        indexOfLastRenderedMessage = index;
+                    }
+                }
+            }
+
+            let messagesToRender = messagesForSelectedUser.slice(indexOfLastRenderedMessage + 1);
+            for (let userMessage of messagesToRender) {
+                chatListElem.append(getUserMessageElem(userMessage));
+                lastRenderedMessage = JSON.stringify(userMessage);
+            }
+        }
+    });
+
+    socket.emit('JOIN_CHAT', {
+        userInfo: getUser()
+    }, (response) => {
+        console.log(response);
+    });
+
+    const usersElem = document.querySelector('.users');
+    const chatListElem = document.querySelector('.chat-list');
+    const sendBtnElem = document.querySelector('.send-button');
+    const messageElem = document.querySelector('.message');
+
+    sendBtnElem.addEventListener('click', () => {
+        const message = messageElem.value;
+        messageElem.value = '';
+
+        if (message && selectedUserToChat) {
+            const userMessage = {
+                from: currentUser.userName,
+                to: selectedUserToChat,
+                data: message
+            };
+
+            const messageElem = getUserMessageElem(userMessage);
+            chatListElem.append(messageElem);
+            messagesToDelete.push(messageElem);
+            socket.emit('MESSAGE', userMessage, (response) => {
+                console.log(response);
+                messageElem.setAttribute('data-message-meta', JSON.stringify(response));
+            });
+        }
+    });
+
+    function addUser(userInfo) {
+        const userElem = document.createElement('div');
+        userElem.innerHTML = userInfo.visibleName;
+        userElem.classList.add('user');
+        userElem.setAttribute('data-room-id', userInfo.userName);
+
+        userElem.addEventListener('click', () => {
+            selectedUserToChat = userInfo.userName;
+            renderUserMessages(userInfo.userName);
+        });
+
+        usersElem.append(userElem);
+    }
+
+    function renderUserMessages(userName) {
+        const selectedUserMessages = userMessages
+            .filter(message => (message.from === selectedUserToChat && message.to === currentUser.userName)
+                || (message.from === currentUser.userName && message.to === selectedUserToChat));
+
+        chatListElem.innerHTML = '';
+
+        for (let userMessage of selectedUserMessages) {
+            chatListElem.append(getUserMessageElem(userMessage));
+            lastRenderedMessage = JSON.stringify(userMessage);
+        }
+    }
+
+    function getUserMessageElem(message) {
+        const messageElem = document.createElement('div');
+        messageElem.innerHTML = message.data;
+        messageElem.classList.add('chat-item');
+
+        if (message.from === currentUser.userName) {
+            messageElem.classList.add('my-text');
+        } else {
+            messageElem.classList.add('others-text');
+        }
+
+        return messageElem;
+    }
 
 </script>
 

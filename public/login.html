@@ -1,0 +1,96 @@
+<html>
+<head>
+    <title>Login</title>
+    <script src="js/main.js"></script>
+    <style>
+        .container {
+            width: 400px;
+            margin: auto;
+            margin-top: 200px;
+            display: flex;
+        }
+
+        .item {
+            margin-top: 20px;
+        }
+
+        input {
+            font-size: 15px;
+            padding: 10px;
+            width: 275px;
+        }
+
+        button {
+            padding-top: 10px;
+            padding-bottom: 10px;
+            padding-left: 15px;
+            padding-right: 15px;
+            cursor: pointer;
+            width: 275px;
+        }
+
+        .form-container {
+            padding: 20px;
+            background-color: #86d4a1;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="form-container">
+            <div class="message item">
+            </div>
+            <div class="item">
+                <input name="visiblename" type="text" class="visibleName" placeholder="visibleName"/>
+            </div>
+            <div class="item">
+                <input name="username" type="text" class="username" placeholder="userName"/>
+            </div>
+            <div class="item">
+                <button type="button" class="submit-btn">Submit</button>
+            </div>
+        </div>
+    </div>
+</body>
+
+<script>
+
+    if (getUser().userName) {
+        goToChatView();
+    }
+
+    const userNameElem = document.querySelector('.username');
+    const visibleNameElem = document.querySelector('.visibleName');
+    const submitBtnElem = document.querySelector('.submit-btn');
+    const messageElem = document.querySelector('.message');
+
+    submitBtnElem.addEventListener('click', () => {
+        console.log(userNameElem.value);
+        messageElem.innerHTML = '';
+        const url = `${rootUrl}login?username=${userNameElem.value}&visibleName=${visibleNameElem.value}`;
+        console.log(url);
+        fetch(url).then(async response => {
+            const responseBody = await response.json();
+            console.log(responseBody);
+
+            if (response.status !== 200) {
+                showValidationMessage(responseBody.message);
+            } else {
+                setUser({
+                    userName: userNameElem.value,
+                    visibleName: visibleNameElem.value,
+                });
+
+                goToChatView();
+            }
+        });
+    });
+
+    function showValidationMessage(message) {
+        messageElem.innerHTML = message;
+    }
+
+</script>
+
+</html>
