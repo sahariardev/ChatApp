@@ -7,6 +7,7 @@
         body {
             font-family: sans-serif;
         }
+
         .container {
             display: flex;
             flex-direction: row;
@@ -79,6 +80,10 @@
             color: #4d4d4d;
             font-family: monospace;
         }
+
+        .notification {
+            background-color: #459be3
+        }
     </style>
 
 </head>
@@ -128,6 +133,13 @@
         }
 
         socket.emit('USER_RENDER_COMPLETE');
+    });
+
+    socket.on('NOTIFICATION', (notifications) => {
+        console.log("notification", notifications);
+        for (let notification of notifications) {
+            showMessageNotification(notification.from);
+        }
     });
 
     socket.on('ALL_MESSAGES', (messages) => {
@@ -194,12 +206,18 @@
         const userElem = document.createElement('div');
         userElem.innerHTML = userInfo.visibleName;
         userElem.classList.add('user');
+        userElem.classList.add(userInfo.userName);
         userElem.setAttribute('data-room-id', userInfo.userName);
 
         userElem.addEventListener('click', () => {
             selectedUserToChat = userInfo.userName;
             withElem.innerHTML = userInfo.visibleName;
             renderUserMessages(userInfo.userName);
+            hideMessageNotification(userInfo.userName);
+            socket.emit('REMOVE_NOTIFICATION', {
+                to: currentUser.userName,
+                from: userInfo.userName
+            });
         });
 
         usersElem.append(userElem);
@@ -230,6 +248,16 @@
         }
 
         return messageElem;
+    }
+
+    function showMessageNotification(userName) {
+        const userElem = usersElem.querySelector(`.${userName}`);
+        userElem.classList.add('notification');
+    }
+
+    function hideMessageNotification(userName) {
+        const userElem = usersElem.querySelector(`.${userName}`);
+        userElem.classList.remove('notification');
     }
 
 </script>
