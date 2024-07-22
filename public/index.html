@@ -3,6 +3,7 @@
     <title>Chat View</title>
     <script src="/socket.io/socket.io.js"></script>
     <script src="js/main.js"></script>
+    <script src="js/jquery-3.7.1.min.js"></script>
     <style>
         body {
             font-family: sans-serif;
@@ -199,6 +200,7 @@
                 console.log(response);
                 messageElem.setAttribute('data-message-meta', JSON.stringify(response));
             });
+            goToBottom();
         }
     });
 
@@ -234,6 +236,8 @@
             chatListElem.append(getUserMessageElem(userMessage));
             lastRenderedMessage = JSON.stringify(userMessage);
         }
+
+        goToBottom();
     }
 
     function getUserMessageElem(message) {
@@ -260,6 +264,9 @@
         userElem.classList.remove('notification');
     }
 
+    const goToBottom = () => {
+        $('.chat-list').scrollTop(document.querySelector('.chat-list').scrollHeight);
+    }
 </script>
 
 </body>
