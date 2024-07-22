@@ -66,6 +66,7 @@ io.of('default').on('connection', (socket) => {
         messages.push(message);
         callback(message);
         io.of('default').to(data.to).emit('ALL_MESSAGES', getUserMessages(data.to));
+        io.of('default').to(data.from).emit('ALL_MESSAGES', getUserMessages(data.from));
     });
 
     socket.on('JOIN_CHAT', (data, callback) => {
@@ -86,5 +87,8 @@ io.of('default').on('connection', (socket) => {
         socket.join(roomId);
 
         io.of('default').emit('NEW_USER_ADDED', users);
+        io.of('default').to(roomId).emit('ALL_MESSAGES', getUserMessages(roomId));
+
+        console.log(messages);
     });
 });

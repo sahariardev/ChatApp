@@ -4,6 +4,9 @@
     <script src="/socket.io/socket.io.js"></script>
     <script src="js/main.js"></script>
     <style>
+        body {
+            font-family: sans-serif;
+        }
         .container {
             display: flex;
             flex-direction: row;
@@ -68,6 +71,14 @@
         .others-text {
             align-self: flex-end;
         }
+
+        .with {
+            text-align: center;
+            background-color: #e5e5e5;
+            padding: 10px;
+            color: #4d4d4d;
+            font-family: monospace;
+        }
     </style>
 
 </head>
@@ -79,6 +90,9 @@
 
     </div>
     <div class="chat">
+        <div class="with">
+            With
+        </div>
         <div class="chat-list">
         </div>
         <div class="form">
@@ -105,17 +119,19 @@
     let userMessages = [];
 
     socket.on('NEW_USER_ADDED', (users) => {
-        console.log(users)
+        console.log("users", users)
         usersElem.innerHTML = '';
         for (let user of users) {
             if (user.userName !== currentUser.userName) {
                 addUser(user);
             }
         }
+
+        socket.emit('USER_RENDER_COMPLETE');
     });
 
     socket.on('ALL_MESSAGES', (messages) => {
-        console.log(messages);
+        console.log("messages", messages);
         userMessages = messages;
 
         if (selectedUserToChat) {
@@ -151,6 +167,7 @@
     const chatListElem = document.querySelector('.chat-list');
     const sendBtnElem = document.querySelector('.send-button');
     const messageElem = document.querySelector('.message');
+    const withElem = document.querySelector('.with');
 
     sendBtnElem.addEventListener('click', () => {
         const message = messageElem.value;
@@ -181,6 +198,7 @@
 
         userElem.addEventListener('click', () => {
             selectedUserToChat = userInfo.userName;
+            withElem.innerHTML = userInfo.visibleName;
             renderUserMessages(userInfo.userName);
         });
 
